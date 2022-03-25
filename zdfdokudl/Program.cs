@@ -1,5 +1,7 @@
 global using zdfdokudl_server.Pages;
 global using zdfdokudl_server.Shared;
+global using zdfdokudl_downloader;
+global using zdfdokudl_downloader.Classes;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 

@@ -16,4 +16,8 @@
     <Folder Include="Data\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\zdfdokudl_downloader\zdfdokudl_downloader.csproj" />
+  </ItemGroup>
+
 </Project>
