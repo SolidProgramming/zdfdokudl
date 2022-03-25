@@ -22,33 +22,18 @@ namespace zdfdokudl_downloader.Classes
 
             htmlDocument.LoadHtml(pageContent);
 
-            var nodes = new ParserQueryBuilder()
+            List<HtmlNode>? nodes = new ParserQueryBuilder()
                 .Query(ref htmlDocument)
                 .ByAttributeValues("data-node-id", Misc.AllowedDocuTopics.Keys.ToList())
                 .Result;  
 
 
+
             return null;
         }
-        internal static List<Topic> CreateTopicList(HtmlNodeCollection unfilteredTopicNodes)
+        internal static List<Topic> CreateTopicList(List<HtmlNode> nodes)
         {
-            List<Topic> topicList = new();
-
-            for (int i = 0; i < unfilteredTopicNodes.Count; i++)
-            {
-                Topic topic = GetTopic(ref unfilteredTopicNodes, i);
-
-                topicList.Add(topic);
-            }
-
-            return topicList;
-        }
-        internal static Topic GetTopic(ref HtmlNodeCollection topicNodes, int index)
-        {
-            return new()
-            {
-                Title = topicNodes[index].SelectSingleNode(".//*[@class='js-rb-live cluster-title']").InnerText
-            };
+            
         }
     }
 }
