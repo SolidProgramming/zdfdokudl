@@ -24,8 +24,7 @@ namespace zdfdokudl_downloader.Classes
 
             var nodes = new ParserQueryBuilder()
                 .Query(ref htmlDocument)
-                .ByClass("sb-page") 
-                .ByAttributeValues("data-node-id", new() { "08c2f76b-4cc5-44bf-b2ad-d1f1e173cebd", "27d082ef-707c-4133-94cb-3410c9efd0ef" })
+                .ByAttributeValues("data-node-id", Misc.AllowedDocuTopics.Keys.ToList())
                 .Result;  
 
 
