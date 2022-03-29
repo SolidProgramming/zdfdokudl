@@ -9,31 +9,72 @@ namespace zdfdokudl_downloader.Classes
 {
     internal static class ZDFHandler
     {
-        private static HtmlDocument htmlDocument = new();
-
         //thumbnail small     https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=240x270
         //thumbnail big       https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=640x720
         //thumbnail wide      https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=384x216 
         //thumbnail wallpaper https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=2400x1350
 
-        internal static async Task<List<Topic>> CreateTopicList()
+        internal static async Task CreateTopicList()
         {
             string pageContent = await PageHandler.GetPageContent("https://www.zdf.de/doku-wissen");
 
-            htmlDocument.LoadHtml(pageContent);
+            HtmlDocument htmlDocument = new();
 
-            List<HtmlNode>? nodes = new ParserQueryBuilder()
-                .Query(ref htmlDocument)
-                .ByAttributeValues("data-node-id", Misc.AllowedDocuTopics.Keys.ToList())
-                .Result;  
+            htmlDocument.LoadHtml(pageContent);         
 
-
-
-            return null;
-        }
-        internal static List<Topic> CreateTopicList(List<HtmlNode> nodes)
-        {
+            GetAllTeaserNodes(htmlDocument);
             
+
         }
+        internal static List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
+        {
+            List<HtmlNode> teaserNodes = new();
+
+            List<HtmlNode> articleNodes = new ParserQueryBuilder()
+                .Query(htmlDocument)
+                .ByElement("article")                
+                .Result;
+
+            List<HtmlNode> normalLoadedNodes = new ParserQueryBuilder()
+                 .Query(articleNodes)
+                 .ByClass("b-cluster-teaser b-vertical-teaser js-teaser-extend cluster-teaser-new js-impression-track")
+                 .Result;
+
+            List<HtmlNode> lazyLoadedNodes = new ParserQueryBuilder()
+                .Query(articleNodes)
+                .ByClass("b-cluster-teaser m-placeholder lazyload")
+                .Result;
+
+            teaserNodes.AddRange(normalLoadedNodes);
+            teaserNodes.AddRange(lazyLoadedNodes);
+
+            return teaserNodes;
+        }
+        internal static List<Teaser> GetAllTeaser(List<HtmlNode> teaserNodes)
+        {
+            List<Teaser> teasers = new();
+
+            for (int i = 0; i < teaserNodes.Count; i++)
+            {
+                Teaser teaser = new()
+                {
+                    
+                };
+
+                teasers.Add(teaser);
+            }
+
+            return teasers;
+        }
+        internal static Teaser GetTeaser(HtmlNode teaserNode)
+        {
+            Teaser teaser = new()
+            {
+                 
+            };
+
+            return new();
+        }
+
     }
 }

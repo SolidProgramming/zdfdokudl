@@ -10,7 +10,7 @@ namespace zdfdokudl_downloader.Classes
     {
         internal static Dictionary<string, DocuTopicType> AllowedDocuTopics = new()
         {
-            { "27d082ef-707c-4133-94cb-3410c9efd0ef",  DocuTopicType.NewDocu},
+            { "27d082ef-707c-4133-94cb-3410c9efd0ef", DocuTopicType.NewDocu },
             { "bdec7ee6-3280-4514-b15e-0da04cc2cf5a", DocuTopicType.HumansAndLife },
             { "08c2f76b-4cc5-44bf-b2ad-d1f1e173cebd", DocuTopicType.NatureAndAnimals },
             { "a7f46711-5621-4ec9-b124-5da6e3d9f378", DocuTopicType.History },
@@ -22,9 +22,33 @@ namespace zdfdokudl_downloader.Classes
             { "0ce2cd3a-6e25-4730-9d5a-c3c2e90c86c0", DocuTopicType.FunkTRU }
         };
 
-        internal static List<Topic> Filter(this List<Topic> list)
+        internal static Dictionary<string, DocuTopicType> DocuNames = new()
+        {
+            { "Neue Dokus und Reportagen", DocuTopicType.NewDocu },
+            { "Menschen und Leben", DocuTopicType.HumansAndLife },
+            { "Natur und Tiere", DocuTopicType.NatureAndAnimals },
+            { "Geschichte", DocuTopicType.History },
+            { "Wissenschaft", DocuTopicType.Science },
+            { "Reise", DocuTopicType.Traveling },
+            { "Architektur", DocuTopicType.Architecture },
+            { "Archäologie", DocuTopicType.Archeology },
+            { "Weltraum", DocuTopicType.Space },
+            { "funk - TRU DOKU", DocuTopicType.FunkTRU }
+        };
+
+        internal static List<Teaser> Filter(this List<Teaser> list)
         {
             return list.Where(_ => AllowedDocuTopics.ContainsKey(_.Title)).ToList();
+        }
+
+        internal static string ToDocuName()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static DocuTopicType ToTopicType()
+        {
+            throw new NotImplementedException();
         }
     }
 }

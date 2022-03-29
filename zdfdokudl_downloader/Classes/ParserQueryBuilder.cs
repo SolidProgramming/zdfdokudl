@@ -9,15 +9,43 @@ namespace zdfdokudl_downloader.Classes
 {
     internal class ParserQueryBuilder
     {
-        private HtmlDocument? _document;
-        private List<HtmlNode>? _nodes = new();
+        private List<HtmlNode> _nodes = new();
 
-        internal List<HtmlNode>? Result => _nodes;
+        internal List<HtmlNode> Result => _nodes;
 
-        internal ParserQueryBuilder Query(ref HtmlDocument doc)
+        internal ParserQueryBuilder Query(HtmlDocument doc)
         {
-            _document = doc;
-            _nodes?.Add(_document.DocumentNode);
+            _nodes.Add(doc.DocumentNode);
+
+            return this;
+        }
+        internal ParserQueryBuilder Query(HtmlNode node)
+        {
+            _nodes.Add(node);
+
+            return this;
+        }
+        internal ParserQueryBuilder Query(List<HtmlNode> nodes)
+        {
+            _nodes.AddRange(nodes);
+
+            return this;
+        }
+
+        internal ParserQueryBuilder ById(string id)
+        {
+            string query = $".//*[@id='{ id }']";
+
+            _nodes = GetNodesByQuery(query);
+
+            return this;
+        }
+        internal ParserQueryBuilder ByElement(string elementName)
+        {
+            string query = ".//" + elementName;
+
+            _nodes = GetNodesByQuery(query);
+
             return this;
         }
         internal ParserQueryBuilder ByClass(params string[] classNames)
@@ -84,7 +112,7 @@ namespace zdfdokudl_downloader.Classes
 
             for (int i = 0; i < _nodes?.Count; i++)
             {
-                HtmlNodeCollection newNodes = _nodes[i].SelectNodes(query);
+                List<HtmlNode>? newNodes = _nodes[i].SelectNodes(query)?.ToList();
 
                 if (newNodes is null) continue;
 
@@ -93,5 +121,7 @@ namespace zdfdokudl_downloader.Classes
 
             return nodes;
         }
+
+
     }
 }
