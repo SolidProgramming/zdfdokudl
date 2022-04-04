@@ -16,14 +16,15 @@ namespace zdfdokudl_downloader.Classes
 
         internal static async Task CreateTopicList()
         {
-            string pageContent = await PageHandler.GetPageContent("https://www.zdf.de/doku-wissen");
+            string pageContent = await PageHandler.GetPageContent(Endpoint.DocuAndKnowledge);
 
             HtmlDocument htmlDocument = new();
 
             htmlDocument.LoadHtml(pageContent);         
 
-            GetAllTeaserNodes(htmlDocument);
-            
+            List<HtmlNode> teaserNodes = GetAllTeaserNodes(htmlDocument);
+
+            List<Teaser> teasers = GetAllTeaser(teaserNodes);
 
         }
         internal static List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
@@ -54,12 +55,9 @@ namespace zdfdokudl_downloader.Classes
         {
             List<Teaser> teasers = new();
 
-            for (int i = 0; i < teaserNodes.Count; i++)
+            foreach (HtmlNode teaserNode in teaserNodes)
             {
-                Teaser teaser = new()
-                {
-                    
-                };
+                Teaser teaser = GetTeaser(teaserNode);
 
                 teasers.Add(teaser);
             }
