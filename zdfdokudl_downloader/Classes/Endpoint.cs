@@ -3,6 +3,7 @@ namespace zdfdokudl_downloader.Classes
 {
     internal static class Endpoint
     {
-        internal const string DocuAndKnowledge = "https://www.zdf.de/doku-wissen";
+        internal const string Base = "https://www.zdf.de/";
+        internal const string DocuAndKnowledge = Base + "doku-wissen";
     }
 }

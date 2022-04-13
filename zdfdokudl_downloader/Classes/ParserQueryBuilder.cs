@@ -11,7 +11,15 @@ namespace zdfdokudl_downloader.Classes
     {
         private List<HtmlNode> _nodes = new();
 
-        internal List<HtmlNode> Result => _nodes;
+        /// <summary>
+        ///     Return all resulting nodes from the list
+        /// </summary>
+        internal List<HtmlNode> Results => _nodes;
+
+        /// <summary>
+        ///     Returns only the first node result from the list
+        /// </summary>
+        internal HtmlNode Result => _nodes[0];
 
         internal ParserQueryBuilder Query(HtmlDocument doc)
         {
@@ -121,7 +129,6 @@ namespace zdfdokudl_downloader.Classes
 
             return nodes;
         }
-
 
     }
 }

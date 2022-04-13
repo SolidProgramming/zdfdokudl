@@ -9,13 +9,10 @@ namespace zdfdokudl_downloader.Classes
 {
     public class Teaser
     {
-        public int Id;
-        public string? Name;
-        public string? Description;
         public string? Title;
-        public string? AssetId;
         public Url Url;
         public DocuTopicType Type = DocuTopicType.None;
-        public Thumbnail Thumbnail;        
+        public Thumbnail Thumbnail;
+        public DataTrack? DataTrack;
     }
 }

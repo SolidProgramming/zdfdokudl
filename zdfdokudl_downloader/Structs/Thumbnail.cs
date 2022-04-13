@@ -9,9 +9,6 @@ namespace zdfdokudl_downloader.Structs
 
     public struct Thumbnail
     {
-        public string Small;
-        public string Big;
-        public string Wide;
-        public string Wallpaper;
+        public string Url;
     }
 }

@@ -9,10 +9,6 @@ namespace zdfdokudl_downloader.Classes
 {
     internal static class ZDFHandler
     {
-        //thumbnail small     https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=240x270
-        //thumbnail big       https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=640x720
-        //thumbnail wide      https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=384x216 
-        //thumbnail wallpaper https://epg-image.zdf.de/fotobase-webdelivery/images/7cdd8c5f-414a-4e58-8b1c-5b40ed153ec9?layout=2400x1350
 
         internal static async Task CreateTopicList()
         {
@@ -20,11 +16,11 @@ namespace zdfdokudl_downloader.Classes
 
             HtmlDocument htmlDocument = new();
 
-            htmlDocument.LoadHtml(pageContent);         
+            htmlDocument.LoadHtml(pageContent);
 
             List<HtmlNode> teaserNodes = GetAllTeaserNodes(htmlDocument);
 
-            List<Teaser> teasers = GetAllTeaser(teaserNodes);
+            List<Teaser> teasers = await GetAllTeaser(teaserNodes);
 
         }
         internal static List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
@@ -33,46 +29,65 @@ namespace zdfdokudl_downloader.Classes
 
             List<HtmlNode> articleNodes = new ParserQueryBuilder()
                 .Query(htmlDocument)
-                .ByElement("article")                
-                .Result;
+                .ByElement("article")
+                .Results;
 
             List<HtmlNode> normalLoadedNodes = new ParserQueryBuilder()
                  .Query(articleNodes)
                  .ByClass("b-cluster-teaser b-vertical-teaser js-teaser-extend cluster-teaser-new js-impression-track")
-                 .Result;
+                 .Results;
 
             List<HtmlNode> lazyLoadedNodes = new ParserQueryBuilder()
                 .Query(articleNodes)
                 .ByClass("b-cluster-teaser m-placeholder lazyload")
-                .Result;
+                .Results;
 
             teaserNodes.AddRange(normalLoadedNodes);
             teaserNodes.AddRange(lazyLoadedNodes);
 
             return teaserNodes;
         }
-        internal static List<Teaser> GetAllTeaser(List<HtmlNode> teaserNodes)
+        internal static async Task<List<Teaser>> GetAllTeaser(List<HtmlNode> teaserNodes)
         {
             List<Teaser> teasers = new();
 
             foreach (HtmlNode teaserNode in teaserNodes)
             {
-                Teaser teaser = GetTeaser(teaserNode);
+                Teaser teaser = await GetTeaser(teaserNode);
 
                 teasers.Add(teaser);
             }
 
             return teasers;
         }
-        internal static Teaser GetTeaser(HtmlNode teaserNode)
+        internal static async Task<Teaser> GetTeaser(HtmlNode teaserNode)
         {
+            HtmlNode dataNode = new ParserQueryBuilder().Query(teaserNode).ByClass("teaser-title-link m-clickarea-action js-rb-autofocus js-track-click has-foot").Result;
+
+            HtmlNode pictureNode = new ParserQueryBuilder().Query(teaserNode).ByClass("artdirect").ByElement("img").Result;
+
             Teaser teaser = new()
             {
-                 
+                Title = dataNode.Attributes["title"].Value,
+                Url = new()
+                {
+                    Site = dataNode.Attributes["href"].Value
+                },
+                DataTrack = JsonConvert.DeserializeObject<DataTrack>(dataNode.Attributes["data-track"].Value),
+                Thumbnail = new()
+                {
+                    Url = pictureNode.Attributes["data-src"].Value
+                }
             };
 
-            return new();
+            string videoPageContent = await PageHandler.GetPageContent("https://www.zdf.de/uri/cfe0c7a7-7d80-4da2-9de6-c9c171dc4913");
+
+            //HtmlNode videoNode = 
+
+            return teaser;
         }
+
+
 
     }
 }
