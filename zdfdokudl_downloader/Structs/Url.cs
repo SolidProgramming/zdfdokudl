@@ -10,5 +10,6 @@ namespace zdfdokudl_downloader.Structs
     {
         public string Site;
         public string Video;
+        public string ShortUrl;
     }
 }

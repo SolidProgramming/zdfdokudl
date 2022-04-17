@@ -12,7 +12,9 @@ namespace zdfdokudl_downloader
     {
         public async Task Start()
         {
-            await ZDFHandler.CreateTopicList();
+            ZDFHandler handler = new();
+
+            await handler.CreateTopicList();
         }
     }
 }

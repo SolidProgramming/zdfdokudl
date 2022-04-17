@@ -1,18 +1,48 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace zdfdokudl_downloader.Classes
 {
-    internal static class ZDFHandler
+    internal class ZDFHandler
     {
-
-        internal static async Task CreateTopicList()
+        private Task<string>? _BearerToken;
+        public Task<string> BearerToken
         {
-            string pageContent = await PageHandler.GetPageContent(Endpoint.DocuAndKnowledge);
+            get
+            {
+                if (_BearerToken is null)
+                {
+                    _BearerToken = GetBearerToken();
+                    return _BearerToken;                   
+                }
+
+                return _BearerToken;
+            }
+            set
+            {
+                _BearerToken = value;
+            }
+        }
+
+        private async Task<string> GetBearerToken()
+        {
+            string pageContent = await PageHandler.GetPageContent(Endpoint.Base);
+
+            string token = Regex.Match(pageContent, "apiToken: '([a-z0-9]{40})'").Groups[1].Value;
+
+            return token;
+        }
+        internal async Task CreateTopicList()
+        {
+            string? pageContent = await PageHandler.GetPageContent(Endpoint.DocuAndKnowledge);
 
             HtmlDocument htmlDocument = new();
 
@@ -23,7 +53,7 @@ namespace zdfdokudl_downloader.Classes
             List<Teaser> teasers = await GetAllTeaser(teaserNodes);
 
         }
-        internal static List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
+        internal List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
         {
             List<HtmlNode> teaserNodes = new();
 
@@ -47,22 +77,25 @@ namespace zdfdokudl_downloader.Classes
 
             return teaserNodes;
         }
-        internal static async Task<List<Teaser>> GetAllTeaser(List<HtmlNode> teaserNodes)
+        internal async Task<List<Teaser>> GetAllTeaser(List<HtmlNode> teaserNodes)
         {
             List<Teaser> teasers = new();
 
             foreach (HtmlNode teaserNode in teaserNodes)
             {
-                Teaser teaser = await GetTeaser(teaserNode);
+                Teaser? teaser = await GetTeaser(teaserNode);
+
+                if (teaser is null) continue;
 
                 teasers.Add(teaser);
             }
 
             return teasers;
         }
-        internal static async Task<Teaser> GetTeaser(HtmlNode teaserNode)
+        internal async Task<Teaser?> GetTeaser(HtmlNode teaserNode)
         {
-            HtmlNode dataNode = new ParserQueryBuilder().Query(teaserNode).ByClass("teaser-title-link m-clickarea-action js-rb-autofocus js-track-click has-foot").Result;
+            HtmlNode dataNode = new ParserQueryBuilder().Query(teaserNode).ByElement("a").Result;
+            dataNode.Attributes["data-track"].Value = HttpUtility.HtmlDecode(dataNode.Attributes["data-track"].Value);
 
             HtmlNode pictureNode = new ParserQueryBuilder().Query(teaserNode).ByClass("artdirect").ByElement("img").Result;
 
@@ -71,23 +104,30 @@ namespace zdfdokudl_downloader.Classes
                 Title = dataNode.Attributes["title"].Value,
                 Url = new()
                 {
-                    Site = dataNode.Attributes["href"].Value
+                    Site = dataNode.Attributes["href"].Value,
+                    ShortUrl = dataNode.Attributes["data-target-id"].Value,
                 },
                 DataTrack = JsonConvert.DeserializeObject<DataTrack>(dataNode.Attributes["data-track"].Value),
                 Thumbnail = new()
                 {
                     Url = pictureNode.Attributes["data-src"].Value
                 }
-            };
+            };           
 
-            string videoPageContent = await PageHandler.GetPageContent("https://www.zdf.de/uri/cfe0c7a7-7d80-4da2-9de6-c9c171dc4913");
+            using HttpClient httpclient = new();
 
-            //HtmlNode videoNode = 
+            httpclient.DefaultRequestHeaders.Add("Api-Auth", $"Bearer { await BearerToken }");
 
-            return teaser;
+
+            HttpResponseMessage response = await httpclient.GetAsync($"{Endpoint.ApiBase}/content/documents/{teaser.Url.ShortUrl}.json?profile=player");
+            response.EnsureSuccessStatusCode();
+            string result = await response.Content.ReadAsStringAsync();
+
+          
+                return teaser;
         }
 
-
+      
 
     }
 }
