@@ -13,26 +13,39 @@ namespace zdfdokudl_downloader.Classes
 {
     internal class ZDFHandler
     {
-        private Task<string>? _BearerToken;
-        public Task<string> BearerToken
+        private static Task<string>? _BearerToken;
+        private static Task<string> BearerToken
         {
             get
             {
                 if (_BearerToken is null)
                 {
                     _BearerToken = GetBearerToken();
-                    return _BearerToken;                   
+                    return _BearerToken;
                 }
 
                 return _BearerToken;
             }
-            set
+        }
+
+        private static Task<PlayerConfiguration?>? _PlayerConfiguraion;
+        private static Task<PlayerConfiguration?> PlayerConfiguration
+        {
+            get
             {
-                _BearerToken = value;
+                if (_PlayerConfiguraion is null)
+                {
+                    _PlayerConfiguraion = GetPlayerConfiguration();
+
+                    return _PlayerConfiguraion;
+                }
+
+                return _PlayerConfiguraion;
             }
         }
 
-        private async Task<string> GetBearerToken()
+
+        private static async Task<string> GetBearerToken()
         {
             string pageContent = await PageHandler.GetPageContent(Endpoint.Base);
 
@@ -40,7 +53,15 @@ namespace zdfdokudl_downloader.Classes
 
             return token;
         }
-        internal async Task CreateTopicList()
+        private static async Task<PlayerConfiguration?> GetPlayerConfiguration()
+        {
+            string pageContent = await PageHandler.GetPageContent(Endpoint.Configuration);
+
+            PlayerConfiguration? configuration = JsonConvert.DeserializeObject<PlayerConfiguration>(pageContent);
+
+            return configuration;
+        }
+        internal static async Task CreateTopicList()
         {
             string? pageContent = await PageHandler.GetPageContent(Endpoint.DocuAndKnowledge);
 
@@ -50,10 +71,10 @@ namespace zdfdokudl_downloader.Classes
 
             List<HtmlNode> teaserNodes = GetAllTeaserNodes(htmlDocument);
 
-            List<Teaser> teasers = await GetAllTeaser(teaserNodes);
+            List<ZDFTeaser> teasers = await GetAllTeaser(teaserNodes);
 
         }
-        internal List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
+        private static List<HtmlNode> GetAllTeaserNodes(HtmlDocument htmlDocument)
         {
             List<HtmlNode> teaserNodes = new();
 
@@ -77,13 +98,13 @@ namespace zdfdokudl_downloader.Classes
 
             return teaserNodes;
         }
-        internal async Task<List<Teaser>> GetAllTeaser(List<HtmlNode> teaserNodes)
+        private static async Task<List<ZDFTeaser>> GetAllTeaser(List<HtmlNode> teaserNodes)
         {
-            List<Teaser> teasers = new();
+            List<ZDFTeaser> teasers = new();
 
             foreach (HtmlNode teaserNode in teaserNodes)
             {
-                Teaser? teaser = await GetTeaser(teaserNode);
+                ZDFTeaser? teaser = await GetTeaser(teaserNode);
 
                 if (teaser is null) continue;
 
@@ -92,14 +113,14 @@ namespace zdfdokudl_downloader.Classes
 
             return teasers;
         }
-        internal async Task<Teaser?> GetTeaser(HtmlNode teaserNode)
+        private static async Task<ZDFTeaser?> GetTeaser(HtmlNode teaserNode)
         {
             HtmlNode dataNode = new ParserQueryBuilder().Query(teaserNode).ByElement("a").Result;
             dataNode.Attributes["data-track"].Value = HttpUtility.HtmlDecode(dataNode.Attributes["data-track"].Value);
 
             HtmlNode pictureNode = new ParserQueryBuilder().Query(teaserNode).ByClass("artdirect").ByElement("img").Result;
 
-            Teaser teaser = new()
+            ZDFTeaser teaser = new()
             {
                 Title = dataNode.Attributes["title"].Value,
                 Url = new()
@@ -112,22 +133,62 @@ namespace zdfdokudl_downloader.Classes
                 {
                     Url = pictureNode.Attributes["data-src"].Value
                 }
-            };           
+            };
 
+            string? playerMainVideoContentUrl = await GetPlayerMainVideoContentUrl(teaser);
+
+            if (playerMainVideoContentUrl is null) return null;
+
+            PlayerConfiguration? playerConfiguration = await PlayerConfiguration;
+
+            if (playerConfiguration is null) return null;
+
+            playerMainVideoContentUrl = playerMainVideoContentUrl.Replace("{playerId}", playerConfiguration.ptmdPlayerId);
+
+            string? mainContentVideoUrl = await GetMainContentVideoUrl(Endpoint.ApiBase + playerMainVideoContentUrl);
+
+            if (mainContentVideoUrl is null) return null;
+
+            teaser.Url.Video = mainContentVideoUrl;
+
+            return teaser;
+        }
+        private static async Task<string?> GetPlayerMainVideoContentUrl(ZDFTeaser teaser)
+        {
             using HttpClient httpclient = new();
 
             httpclient.DefaultRequestHeaders.Add("Api-Auth", $"Bearer { await BearerToken }");
 
-
             HttpResponseMessage response = await httpclient.GetAsync($"{Endpoint.ApiBase}/content/documents/{teaser.Url.ShortUrl}.json?profile=player");
-            response.EnsureSuccessStatusCode();
-            string result = await response.Content.ReadAsStringAsync();
 
-          
-                return teaser;
+            if (response.StatusCode != HttpStatusCode.OK) return null;
+
+            string stringResult = await response.Content.ReadAsStringAsync();
+
+            PlayerResponse? playerResponse = JsonConvert.DeserializeObject<PlayerResponse?>(stringResult);
+
+            if (playerResponse is null || playerResponse.mainVideoContent is null) return null;
+
+            return playerResponse.mainVideoContent.HttpZdfDeRelsTarget.HttpZdfDeRelsStreamsPtmdTemplate;
         }
+        private static async Task<string?> GetMainContentVideoUrl(string playerMainVideoContentUrl)
+        {
+            using HttpClient httpclient = new();
 
-      
+            httpclient.DefaultRequestHeaders.Add("Api-Auth", $"Bearer { await BearerToken }");
+
+            HttpResponseMessage response = await httpclient.GetAsync(playerMainVideoContentUrl);
+
+            if (response.StatusCode != HttpStatusCode.OK) return null;
+
+            string stringResult = await response.Content.ReadAsStringAsync();
+
+            ZDFMainContentVideoResponse? contentVideoResponse = JsonConvert.DeserializeObject<ZDFMainContentVideoResponse>(stringResult);
+
+            if (contentVideoResponse is null) return null;
+
+            return contentVideoResponse.priorityList[0].formitaeten[0].qualities[0].audio.tracks[0].uri;
+        }
 
     }
 }

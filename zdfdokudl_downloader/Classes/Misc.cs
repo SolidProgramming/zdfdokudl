@@ -36,7 +36,7 @@ namespace zdfdokudl_downloader.Classes
             { "funk - TRU DOKU", DocuTopicType.FunkTRU }
         };
 
-        internal static List<Teaser> Filter(this List<Teaser> list)
+        internal static List<ZDFTeaser> Filter(this List<ZDFTeaser> list)
         {
             return list.Where(_ => AllowedDocuTopics.ContainsKey(_.Title)).ToList();
         }

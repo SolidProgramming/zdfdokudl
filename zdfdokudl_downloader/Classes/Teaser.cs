@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace zdfdokudl_downloader.Classes
+﻿namespace zdfdokudl_downloader.Classes
 {
     public class Teaser
     {
-        public string? Title;
-        public Url Url;
-        public DocuTopicType Type = DocuTopicType.None;
-        public Thumbnail Thumbnail;
-        public DataTrack? DataTrack;
+        [JsonProperty("http://zdf.de/rels/target")]
+        public HttpZdfDeRelsTarget HttpZdfDeRelsTarget { get; set; }
+        public string headerDecorationText { get; set; }
+        public bool displayBrandLogo { get; set; }
+        public string profile { get; set; }
     }
+
+
 }
